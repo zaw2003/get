@@ -37,16 +37,36 @@ async def get_sid_from_gateway(session):
                 print("[-] Portal URL ကို ရှာမတွေ့ပါ...")
                 return None
 
-            # --- ဒီနေရာမှာ u Object ကို တည်ဆောက်ပြီး တစ်ခုလုံးကို Print ထုတ်ပြတာပါ ---
-            u = urlparse(portal_url)
-
-            print("\n==============================================")
-            print("[+] Portal URL တစ်ခုလုံးကို အောင်မြင်စွာ ဖမ်းမိပါပြီ!")
-            print(f"-> Full URL: {portal_url}")
             
-            print("==============================================\n")
 
-            return u
+            # -------------------------------------------------------------
+            # [ဒီနေရာကစပြီး အဆင့်တစ်ဆင့် ထပ်တိုးလိုက်တာပါ]
+            # -------------------------------------------------------------
+            # ၁။ မိလာတဲ့ URL ထဲက /auth/wifidogAuth/login/? နေရာမှာ သင်လိုချင်တဲ့ API URL နဲ့ အစားထိုးလိုက်တယ်
+            target_stage_url = portal_url.replace(
+                "/auth/wifidogAuth/login/?", "/api/auth/wifidog?stage=portal&"
+            )
+            
+            print("[*] ဒုတိယအဆင့် URL တစ်ခုလုံးကြီးကို ပြောင်းလဲတည်ဆောက်ပြီးပါပြီ -")
+            print(f"-> Target URL: {target_stage_url}")
+            
+            # ၂။ သင်ပြပေးထားတဲ့ Header ပုံစံအတိုင်း ပြင်ဆင်တယ်
+            next_headers = {
+                "User-Agent": "Mozilla/5.0 (Linux; Android 14; 22101316C Build/UP1A.231005.007) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.91 Mobile Safari/537.36",
+                "X-Requested-With": "mark.via.gp",
+                "Referer": portal_url  # မူရင်း URL ကို Referer အဖြစ် ပြန်ထည့်ပေးထားပါတယ်
+            }
+            
+            
+            # ၃။ target_stage_url တစ်ခုလုံးကြီးဆီကို Request တိုက်ရိုက်ပို့ပြီး ယူလိုက်တာပါ
+            async with session.get(target_stage_url, headers=next_headers, timeout=TIMEOUT_SEC) as r2:
+                portal_response_text = await r2.text()
+                
+               
+                
+                # လိုချင်တဲ့ Response စာသား သို့မဟုတ် u Object ကို ပြန်ပေးလို့ရပါတယ်
+                u = urlparse(target_stage_url)
+                return portal_response_text  
 
     except Exception as e:
         print(f"[-] အမှားအယွင်းတစ်ခု ရှိခဲ့ပါတယ်: {e}")
